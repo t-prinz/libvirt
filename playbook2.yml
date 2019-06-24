@@ -1,0 +1,9 @@
+---
+- name: Playbook 2
+  hosts: "{{ target_host | default('NO_HOSTS')}}"
+  remote_user: root
+
+  tasks:
+    - name: Print target host
+      debug:
+        var: target_host
