@@ -1,0 +1,87 @@
+---
+- name: Provision a VM using KVM
+  hosts: "{{ target_host | default('NO_HOSTS')}}"
+  remote_user: root
+  vars:
+    vm_name: "newhost"
+    vm_fq_hostname: "newhost.aeronet.io"
+#    vm_domain: "aeronet.io"
+    vm_memory_size_KiB: "1536"
+    vm_disk_size_GiB: "9"
+    kvm_vm_directory: "/var/lib/libvirt/images"
+#    kvm_os_variant: "rhel7"
+    kvm_os_variant: "rhel8"
+    kvm_network: "default"
+    remote_iso_content_dir: "~/Content/isos"
+    remote_kickstart_content_dir: "~/Content/kickstart"
+    local_iso_content_dir: "./isos"
+    local_template_dir: "./templates"
+    rhel8_content_info:
+      iso: "FEDSLED-SA-tprinz-rhel-8.0-x86_64-dvd-2019-04-11.iso"
+      os_variant: "rhel8.0"
+      kst: "rhel80-kvm-minimal.ks.j2"
+    rhel7_content_info:
+      iso: "FEDSLED-SA-tprinz-rhel-server-7.6-x86_64-dvd-2018-10-11.iso"
+      os_variant: "rhel7.6"
+      kst: "rhel76-kvm-minimal.ks.j2"
+
+  tasks:
+#    - name: Define the VM hostname
+#      set_fact:
+#        vm_fq_hostname: "{{ vm_name }}.{{ vm_domain }}"
+
+    - name: Ensure remote ISO directory exists
+      file:
+        path: "{{ remote_iso_content_dir }}"
+        state: directory
+
+    - name: Ensure remote kickstart directory exists
+      file:
+        path: "{{ remote_kickstart_content_dir }}"
+        state: directory
+
+    - name: Block for RHEL 7 systems
+      block:
+
+      - name: Create RHEL 7 kickstart file from template
+        template:
+          dest: "{{ remote_kickstart_content_dir }}/{{ vm_fq_hostname }}.ks"
+          src: "{{ local_template_dir }}/{{ rhel7_content_info.kst }}"
+
+#      - name: Ensure RHEL 7 ISO is copied
+#        copy:
+#          dest: "{{ remote_iso_content_dir }}/{{ rhel7_content_info.iso }}"
+#          src: "{{ local_iso_content_dir }}/{{ rhel7_content_info.iso }}"
+
+      - name: Provision the RHEL 7 VM
+        command: 'virt-install --name {{ vm_name }} --memory {{ vm_memory_size_KiB }} --disk path={{ kvm_vm_directory }}/{{ vm_name }},size={{ vm_disk_size_GiB }} --location {{ remote_iso_content_dir }}/{{ rhel7_content_info.iso }} --os-variant {{ rhel7_content_info.os_variant }} --network bridge=mybridge0 --initrd-inject {{ remote_kickstart_content_dir }}/{{ vm_fq_hostname }}.ks --extra-args="ks=file:/{{ vm_fq_hostname }}.ks"'
+#        command: 'virt-install --name {{ vm_name }} --memory {{ vm_memory_size_KiB }} --disk path={{ kvm_vm_directory }}/{{ vm_name }},size={{ vm_disk_size_GiB }} --location {{ remote_iso_content_dir }}/{{ rhel7_content_info.iso }} --os-variant {{ rhel7_content_info.os_variant }} --network network=default --initrd-inject {{ remote_kickstart_content_dir }}/{{ vm_fq_hostname }}.ks --extra-args="ks=file:/{{ vm_fq_hostname }}.ks"'
+
+      when: kvm_os_variant == "rhel7"
+
+    - name: Block for RHEL 8 systems
+      block:
+
+      - name: Create RHEL 8 kickstart file from template
+        template:
+          dest: "{{ remote_kickstart_content_dir }}/{{ vm_fq_hostname }}.ks"
+          src: "{{ local_template_dir }}/{{ rhel8_content_info.kst }}"
+
+#      - name: Ensure RHEL 8 ISO is copied
+#        copy:
+#          dest: "{{ remote_iso_content_dir }}/{{ rhel8_content_info.iso }}"
+#          src: "{{ local_iso_content_dir }}/{{ rhel8_content_info.iso }}"
+
+      - name: Provision the RHEL 8 VM
+        command: 'virt-install --name {{ vm_name }} --memory {{ vm_memory_size_KiB }} --disk path={{ kvm_vm_directory }}/{{ vm_name }},size={{ vm_disk_size_GiB }} --location {{ remote_iso_content_dir }}/{{ rhel8_content_info.iso }} --os-variant {{ rhel8_content_info.os_variant }} --network bridge=mybridge0 --initrd-inject {{ remote_kickstart_content_dir }}/{{ vm_fq_hostname }}.ks --extra-args="ks=file:/{{ vm_fq_hostname }}.ks"'
+#        command: 'virt-install --name {{ vm_name }} --memory {{ vm_memory_size_KiB }} --disk path={{ kvm_vm_directory }}/{{ vm_name }},size={{ vm_disk_size_GiB }} --location {{ remote_iso_content_dir }}/{{ rhel8_content_info.iso }} --os-variant {{ rhel8_content_info.os_variant }} --network network=default --initrd-inject {{ remote_kickstart_content_dir }}/{{ vm_fq_hostname }}.ks --extra-args="ks=file:/{{ vm_fq_hostname }}.ks"'
+
+      when: kvm_os_variant == "rhel8"
+
+    - name: Wait for VM to become ready
+      wait_for:
+        host: "{{ vm_fq_hostname }}"
+        state: started
+        port: 22
+        delay: 15
+        timeout: 90
