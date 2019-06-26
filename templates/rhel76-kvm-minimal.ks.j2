@@ -1,0 +1,66 @@
+#version=DEVEL
+# System authorization information
+auth --enableshadow --passalgo=sha512
+repo --name="Server-HighAvailability" --baseurl=file:///run/install/repo/addons/HighAvailability
+repo --name="Server-ResilientStorage" --baseurl=file:///run/install/repo/addons/ResilientStorage
+# Use CDROM installation media
+cdrom
+# Use graphical install
+graphical
+# Run the Setup Agent on first boot
+firstboot --enable
+ignoredisk --only-use=vda
+# Keyboard layouts
+keyboard --vckeymap=us --xlayouts='us'
+# System language
+lang en_US.UTF-8
+
+# Network information
+network  --bootproto=dhcp --device=eth0 --ipv6=auto --activate
+network  --hostname={{ vm_fq_hostname }}
+
+# Root password
+rootpw --iscrypted $6$PdjVTzpayYkbAp5F$QcPSB1fiJFOHMRIZG8vY6FlAy6os1z5j7zC10.7itmfD02gdzBoTy9OSFTehO/1clNyH0GUHIY9MZ4.y6kPyY/
+# System services
+services --enabled="chronyd"
+# System timezone
+timezone America/Chicago --isUtc
+user --name=tprinz --password=$6$3Jchc.dygMj.IeEk$v13rhacrAIRApeO6Jx9ZCuUIF5QsGmpbKGHWKIbda5hgF9XZEzaFiJJHw7gOfsALc17.XzL6hUVWyyEqLQMrT0 --iscrypted --gecos="Trey Prinz"
+# System bootloader configuration
+bootloader --append=" crashkernel=auto" --location=mbr --boot-drive=vda
+autopart --type=lvm
+# Partition clearing information
+clearpart --none --initlabel
+
+# Reboot and eject bootable media
+reboot --eject
+
+%post --log=/root/kickstart-post-install.log
+
+echo "tprinz   ALL=(ALL)   NOPASSWD: ALL" >> /etc/sudoers.d/custom-users
+chmod 440 /etc/sudoers.d/custom-users
+
+mkdir /root/.ssh
+chmod 700 /root/.ssh
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCtPrgujMDN/fsPExdmQ4WwHcstTqwfILgFoU0oQPTxb4P8+o+K12wgtO14DJp2pV1azw97Sy6JRZssjorRWw2L1SloazhOxyrNpQrSB0cnPezpeatF9ETeRAiOY7zBAr5OQZWues2V+wRA2lt9gwzy/NeYO4BciiM/KgshTW6WxcnyKXsuzu4Y2o58ehIC3slaQySvyhNyew80Yl3Do23pdTtZQfB5pjO9X04xGwIEgNHNHQpr1azpkZCzjoo4cdSim3KiARo78q8a+1d1tNvfyt5oWiWtdl3/+VWXJWunnvRkDuZA6WLLRJkEjeoEPeweIPm5tuvpBK9eH2wnpPVJ tprinz@bastion.example.com" >> /root/.ssh/authorized_keys
+chmod 600 /root/.ssh/authorized_keys
+
+%end
+
+%packages
+@^minimal
+@core
+chrony
+kexec-tools
+
+%end
+
+%addon com_redhat_kdump --enable --reserve-mb='auto'
+
+%end
+
+%anaconda
+pwpolicy root --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+pwpolicy user --minlen=6 --minquality=1 --notstrict --nochanges --emptyok
+pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+%end

@@ -1,0 +1,60 @@
+#version=RHEL8
+ignoredisk --only-use=vda
+autopart --type=lvm
+# Partition clearing information
+clearpart --none --initlabel
+# Use graphical install
+graphical
+repo --name="AppStream" --baseurl=file:///run/install/repo/AppStream
+# Use CDROM installation media
+cdrom
+# Keyboard layouts
+keyboard --vckeymap=us --xlayouts='us'
+# System language
+lang en_US.UTF-8
+
+# Network information
+network  --bootproto=dhcp --device=enp1s0 --ipv6=auto --activate
+network  --hostname={{ vm_fq_hostname }}
+# Root password
+rootpw --iscrypted $6$CkwMmZDTj5LZuXSb$YiO/fzM70MLVHN20d5dq1/uK6a6pBzNpdRwlmjDjkEGqxLGYxF4rudDryPAtks2ug/TB6v0QDI83WojtlDnfP1
+# Run the Setup Agent on first boot
+firstboot --enable
+# Do not configure the X Window System
+skipx
+# System services
+services --enabled="chronyd"
+# System timezone
+timezone America/Chicago --isUtc
+user --name=tprinz --password=$6$m6c66alz2g7Txy/.$osq5xG8Eko8CbfiEu0PfoT0zX4Mp5IIXzYQ7VXuIwo7Q43i6Cl93CjqJryr5Ey/lbOexYpMmOafX327w2u1wG0 --iscrypted --gecos="Trey Prinz"
+
+# Reboot and eject bootable media
+reboot --eject
+
+%post --log=/root/kickstart-post-install.log
+
+echo "tprinz   ALL=(ALL)   NOPASSWD: ALL" >> /etc/sudoers.d/custom-users
+chmod 440 /etc/sudoers.d/custom-users
+
+mkdir /root/.ssh
+chmod 700 /root/.ssh
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCtPrgujMDN/fsPExdmQ4WwHcstTqwfILgFoU0oQPTxb4P8+o+K12wgtO14DJp2pV1azw97Sy6JRZssjorRWw2L1SloazhOxyrNpQrSB0cnPezpeatF9ETeRAiOY7zBAr5OQZWues2V+wRA2lt9gwzy/NeYO4BciiM/KgshTW6WxcnyKXsuzu4Y2o58ehIC3slaQySvyhNyew80Yl3Do23pdTtZQfB5pjO9X04xGwIEgNHNHQpr1azpkZCzjoo4cdSim3KiARo78q8a+1d1tNvfyt5oWiWtdl3/+VWXJWunnvRkDuZA6WLLRJkEjeoEPeweIPm5tuvpBK9eH2wnpPVJ tprinz@bastion.example.com" >> /root/.ssh/authorized_keys
+chmod 600 /root/.ssh/authorized_keys
+
+%end
+
+%packages
+@^minimal-environment
+kexec-tools
+
+%end
+
+%addon com_redhat_kdump --enable --reserve-mb='auto'
+
+%end
+
+%anaconda
+pwpolicy root --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+pwpolicy user --minlen=6 --minquality=1 --notstrict --nochanges --emptyok
+pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+%end
