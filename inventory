@@ -1,6 +1,0 @@
-myrhel8t.aeronet.io
-[local]
-localhost ansible_connection=local
-
-[kvm]
-kvm.aeronet.io
