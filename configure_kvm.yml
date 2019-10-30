@@ -1,0 +1,47 @@
+---
+- name: Configure KVM virtualization
+  hosts: "{{ target_host | default('NO_HOSTS')}}"
+  remote_user: root
+
+  tasks:
+    - name: Block for RHEL 7 systems
+      block:
+
+      - name: Ensure RHEL 7 software is installed
+        package:
+          name: "{{ item }}"
+          state: present
+        with_items:
+          - virt-install
+          - virt-manager
+
+      when: ansible_facts.distribution == "RedHat" and ansible_facts.distribution_major_version == "7"
+
+    - name: Block for RHEL 8 systems
+      block:
+
+      - name: Ensure RHEL 8 module is installed
+        command: yum -y module install virt
+
+      - name: Ensure RHEL 8 software is installed
+        package:
+          name: "{{ item }}"
+          state: present
+        with_items:
+          - virt-install
+          - cockpit-machines
+
+      when: ansible_facts.distribution == "RedHat" and ansible_facts.distribution_major_version == "8"
+
+# TODO
+# nmcli con add type bridge ifname mybridge0
+# nmcli con modify ens3 master bridge-mybridge0 slave-type bridge
+# nmcli con up bridge-mybridge0
+# nmcli con modify bridge-mybridge0 ipv4.method manual ipv4.addresses 192.168.0.9/24 ipv4.gateway 192.168.0.2 ipv4.dns 192.168.0.1,10.0.0.1
+# For virt-who
+# On the Satellite server:
+# run ssh-keygen
+# run ssh-copy-id to put the key on the kvm server
+# generate the virt-who config
+# deploy the virt-who config
+# kt_activation_key
