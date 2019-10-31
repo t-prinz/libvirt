@@ -1,0 +1,23 @@
+---
+- name: Ensure system is registered with access to required repositories
+  hosts: "{{ target_host | default('NO_HOSTS')}}"
+  vars:
+    kvm_vm_name: "newhost"
+    vm_fq_hostname: "newhost.aeronet.io"
+
+  tasks:
+    - name: Get status
+      virt:
+        name: "{{ host }}"
+        command: status
+      register: vm_status
+      delegate_to: localhost
+
+    - name: Print status
+      debug:
+        var: vm_status.status
+
+    - name: Start vm if it is shutdown
+      debug:
+        msg: "system is down"
+      when: vm_status.status == "shutdown"

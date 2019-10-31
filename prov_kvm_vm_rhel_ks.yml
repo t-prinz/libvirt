@@ -3,9 +3,8 @@
   hosts: "{{ target_host | default('NO_HOSTS')}}"
   remote_user: root
   vars:
-    vm_name: "newhost"
+    kvm_vm_name: "newhost"
     vm_fq_hostname: "newhost.aeronet.io"
-#    vm_domain: "aeronet.io"
     vm_memory_size_KiB: "1536"
     vm_disk_size_GiB: "9"
     kvm_vm_directory: "/var/lib/libvirt/images"
@@ -26,9 +25,6 @@
       kst: "rhel76-kvm-minimal.ks.j2"
 
   tasks:
-#    - name: Define the VM hostname
-#      set_fact:
-#        vm_fq_hostname: "{{ vm_name }}.{{ vm_domain }}"
 
     - name: Ensure remote ISO directory exists
       file:
@@ -54,8 +50,8 @@
 #          src: "{{ local_iso_content_dir }}/{{ rhel7_content_info.iso }}"
 
       - name: Provision the RHEL 7 VM
-        command: 'virt-install --name {{ vm_name }} --memory {{ vm_memory_size_KiB }} --disk path={{ kvm_vm_directory }}/{{ vm_name }},size={{ vm_disk_size_GiB }} --location {{ remote_iso_content_dir }}/{{ rhel7_content_info.iso }} --os-variant {{ rhel7_content_info.os_variant }} --network bridge=mybridge0 --initrd-inject {{ remote_kickstart_content_dir }}/{{ vm_fq_hostname }}.ks --extra-args="ks=file:/{{ vm_fq_hostname }}.ks"'
-#        command: 'virt-install --name {{ vm_name }} --memory {{ vm_memory_size_KiB }} --disk path={{ kvm_vm_directory }}/{{ vm_name }},size={{ vm_disk_size_GiB }} --location {{ remote_iso_content_dir }}/{{ rhel7_content_info.iso }} --os-variant {{ rhel7_content_info.os_variant }} --network network=default --initrd-inject {{ remote_kickstart_content_dir }}/{{ vm_fq_hostname }}.ks --extra-args="ks=file:/{{ vm_fq_hostname }}.ks"'
+        command: 'virt-install --name {{ kvm_vm_name }} --memory {{ vm_memory_size_KiB }} --disk path={{ kvm_vm_directory }}/{{ kvm_vm_name }},size={{ vm_disk_size_GiB }} --location {{ remote_iso_content_dir }}/{{ rhel7_content_info.iso }} --os-variant {{ rhel7_content_info.os_variant }} --network bridge=mybridge0 --initrd-inject {{ remote_kickstart_content_dir }}/{{ vm_fq_hostname }}.ks --extra-args="ks=file:/{{ vm_fq_hostname }}.ks"'
+#        command: 'virt-install --name {{ kvm_vm_name }} --memory {{ vm_memory_size_KiB }} --disk path={{ kvm_vm_directory }}/{{ kvm_vm_name }},size={{ vm_disk_size_GiB }} --location {{ remote_iso_content_dir }}/{{ rhel7_content_info.iso }} --os-variant {{ rhel7_content_info.os_variant }} --network network=default --initrd-inject {{ remote_kickstart_content_dir }}/{{ vm_fq_hostname }}.ks --extra-args="ks=file:/{{ vm_fq_hostname }}.ks"'
 
       when: kvm_os_variant == "rhel7"
 
@@ -73,8 +69,8 @@
 #          src: "{{ local_iso_content_dir }}/{{ rhel8_content_info.iso }}"
 
       - name: Provision the RHEL 8 VM
-        command: 'virt-install --name {{ vm_name }} --memory {{ vm_memory_size_KiB }} --disk path={{ kvm_vm_directory }}/{{ vm_name }},size={{ vm_disk_size_GiB }} --location {{ remote_iso_content_dir }}/{{ rhel8_content_info.iso }} --os-variant {{ rhel8_content_info.os_variant }} --network bridge=mybridge0 --initrd-inject {{ remote_kickstart_content_dir }}/{{ vm_fq_hostname }}.ks --extra-args="ks=file:/{{ vm_fq_hostname }}.ks"'
-#        command: 'virt-install --name {{ vm_name }} --memory {{ vm_memory_size_KiB }} --disk path={{ kvm_vm_directory }}/{{ vm_name }},size={{ vm_disk_size_GiB }} --location {{ remote_iso_content_dir }}/{{ rhel8_content_info.iso }} --os-variant {{ rhel8_content_info.os_variant }} --network network=default --initrd-inject {{ remote_kickstart_content_dir }}/{{ vm_fq_hostname }}.ks --extra-args="ks=file:/{{ vm_fq_hostname }}.ks"'
+        command: 'virt-install --name {{ kvm_vm_name }} --memory {{ vm_memory_size_KiB }} --disk path={{ kvm_vm_directory }}/{{ kvm_vm_name }},size={{ vm_disk_size_GiB }} --location {{ remote_iso_content_dir }}/{{ rhel8_content_info.iso }} --os-variant {{ rhel8_content_info.os_variant }} --network bridge=mybridge0 --initrd-inject {{ remote_kickstart_content_dir }}/{{ vm_fq_hostname }}.ks --extra-args="ks=file:/{{ vm_fq_hostname }}.ks"'
+#        command: 'virt-install --name {{ kvm_vm_name }} --memory {{ vm_memory_size_KiB }} --disk path={{ kvm_vm_directory }}/{{ kvm_vm_name }},size={{ vm_disk_size_GiB }} --location {{ remote_iso_content_dir }}/{{ rhel8_content_info.iso }} --os-variant {{ rhel8_content_info.os_variant }} --network network=default --initrd-inject {{ remote_kickstart_content_dir }}/{{ vm_fq_hostname }}.ks --extra-args="ks=file:/{{ vm_fq_hostname }}.ks"'
 
       when: kvm_os_variant == "rhel8"
 
