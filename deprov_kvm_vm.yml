@@ -4,7 +4,6 @@
   become: true
   vars:
     kvm_vm_name: null
-#    vm_fq_hostname: "newhost.aeronet.io"
 
   tasks:
 
@@ -18,10 +17,6 @@
         command: list_vms
       register: vm_list
 
-    - name: Print list of VM's
-      debug:
-        var: vm_list
-
     - name: Fail playbook if VM not found
       fail:
         msg: "VM {{ kvm_vm_name }} not found"
@@ -30,11 +25,6 @@
     - name: Get list of snapshots
       command: "virsh snapshot-list --name {{ kvm_vm_name }}"
       register: snap_list
-
-    - name: Print
-      debug:
-        var: snap_list.stdout_lines
-      when: snap_list.stdout_lines
 
     - name: Delete all snapshots
       command: "virsh snapshot-delete {{ kvm_vm_name }} {{ item }}"
@@ -49,15 +39,6 @@
     - name: Get list of all non-"cdrom" storage
       shell: "virsh domblklist {{ kvm_vm_name }} --details | grep -v '^T' | grep -v '^-' | awk '{if ($1==\"file\" && $2 != \"cdrom\") print $4}'"
       register: storage_list
-
-    - name: Print
-      debug:
-        var: storage_list
-
-    - name: Print list of files to delete
-      debug:
-        msg: "will delete {{ item }}"
-      with_items: "{{ storage_list.stdout_lines }}"
 
     - name: Delete VM
       virt:
